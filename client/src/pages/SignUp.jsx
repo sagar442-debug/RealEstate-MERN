@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import {Link} from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export default function SignUp() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({});
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange =(e)=>{
     setFormData({
@@ -13,6 +17,8 @@ export default function SignUp() {
 
     const handleSubmit = async (e) =>{
       e.preventDefault();
+      try {
+        setLoading(true);
       const res = await fetch('http://localhost:3000/api/user/signup', {
         method: 'POST',
         headers: {
@@ -21,7 +27,19 @@ export default function SignUp() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      console.log(data);
+      if (data.success=== false){
+        setError(data.message);
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+      setError(null);
+      navigate('/signin')
+    } catch (error) {
+        setLoading(false);
+        setError(error.message)
+        
+      }
     }
 
   return (
@@ -40,7 +58,7 @@ export default function SignUp() {
         id='password'
         onChange={handleChange}
         />
-        <button onClick={handleSubmit} className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80'>Sign up</button>
+        <button disabled={loading} onClick={handleSubmit} className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80'>{loading? 'Signing Up...': 'Sign up'}</button>
       </form>
       <div className="flex gap-2 mt-5">
         <p>Have an account</p>
@@ -48,6 +66,7 @@ export default function SignUp() {
             <span className='text-blue-700 hover:underline'>Sign in</span>
           </Link>
       </div>
+      {error && <p className="text-red-500 mt-5">{error}</p>}
     </div>
   )
 }
